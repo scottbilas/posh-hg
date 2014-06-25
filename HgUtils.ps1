@@ -61,7 +61,14 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
 	{
 		   hg summary | foreach {   
 		  switch -regex ($_) {
-			'parent: (\S*) ?(.*)' { $commit = $matches[1]; $tags = $matches[2].Replace("(empty repository)", "").Split(" ", [StringSplitOptions]::RemoveEmptyEntries) } 
+  			'parent: (\S*) ?(.*)' { $commit = $matches[1]; $tags = $matches[2]
+  			  if ($tags -match '\(empty repository|no revision checked out\)') {
+  			    $tags = $tags.Split(" ", [StringSplitOptions]::RemoveEmptyEntries)
+  			  }
+  			  else {
+  			   $tags = @($tags.Trim())
+  			  }
+  			}
 			'branch: ([\S ]*)' { $branch = $matches[1] }
 			'update: (\d+)' { $behind = $true }
 			'pmerge: (\d+) pending' { $behind = $true }

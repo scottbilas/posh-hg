@@ -29,6 +29,10 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
         Write-Prompt $status.Branch -BackgroundColor $branchBg -ForegroundColor $branchFg
         
+        if($status.Behind) {
+          Write-Prompt ('#' + $status.Commit.Split(':')[0]) -BackgroundColor $branchBg -ForegroundColor $branchFg
+        }
+
         if($status.Added) {
           Write-Prompt "$($s.AddedStatusPrefix)$($status.Added)" -BackgroundColor $s.AddedBackgroundColor -ForegroundColor $s.AddedForegroundColor
         }
