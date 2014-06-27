@@ -145,6 +145,11 @@ function PopulateHgCommands() {
     }
   }
   
+  # add in any aliases or commands we find in the hgrc
+  $hgrc = get-inicontent (resolve-path ~\.hgrc)
+  $hgCommands += $hgrc.alias.keys
+  $hgCommands += $hgrc.extdiff.keys | %{ if ($_ -match '^cmd\.(.*)') {$matches[1]} }
+
   $script:hgCommands = $hgCommands
 }
 
