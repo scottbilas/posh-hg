@@ -145,10 +145,16 @@ function PopulateHgCommands() {
     }
   }
   
+  function hg-show($what) {
+    hg show $what | ?{ $_ -match "$what\.([^=]+)=" } | %{ $matches[1] }
+  }
+
   # add in any aliases or commands we find in the hgrc
-  $hgrc = get-inicontent (resolve-path ~\.hgrc)
-  $hgCommands += $hgrc.alias.keys
-  $hgCommands += $hgrc.extdiff.keys | %{ if ($_ -match '^cmd\.(.*)') {$matches[1]} }
+  $hgCommands += hg-show alias
+  $hgCommands += hg-show extdiff | ?{ $_ -match 'cmd\.(.*)'} | %{ $matches[1] }
+
+  # let's do some guesses about the extensions - if the first line is "hg something" then it's probably a usage line for a command
+  $hgCommands += hg-show extensions | ?{ (hg help $_)[0] -match 'hg (\S+)' } | %{ $matches[1] }
 
   $script:hgCommands = $hgCommands
 }
