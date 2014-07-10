@@ -1,7 +1,8 @@
 $global:PoshHgSettings = New-Object PSObject -Property @{
-    #Retreival settings
+    #Retrieval settings
     GetFileStatus             = $true
     GetBookmarkStatus         = $true
+    GetShelveStatus           = $true
 	
     #Before prompt
     BeforeText                = ' ['
@@ -37,13 +38,18 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
 	RenamedForegroundColor    = [ConsoleColor]::Yellow
     RenamedBackgroundColor    = $Host.UI.RawUI.BackgroundColor
     
-    #Tag list
+    # Tag list
     ShowTags                  = $true
     BeforeTagText             = ' '
     TagForegroundColor        = [ConsoleColor]::DarkGray
     TagBackgroundColor        = $Host.UI.RawUI.BackgroundColor
     TagSeparator              = ", "
     TagSeparatorColor         = [ConsoleColor]::White
+    
+    # Shelved stats
+    ShowShelved               = $true
+    ShelvedForegroundColor    = [ConsoleColor]::DarkGray
+    ShelvedBackgroundColor    = $Host.UI.RawUI.BackgroundColor
     
     # MQ Integration
     ShowPatches                   = $false

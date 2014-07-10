@@ -23,7 +23,7 @@ function isHgDirectory() {
     return $false
 }
 
-function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
+function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelveStatus=$true) {
   if(isHgDirectory) {
     $untracked = 0
     $added = 0
@@ -35,6 +35,8 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
     $commit = ""
     $behind = $false
     $multipleHeads = $false
+    $shelvedthis = 0
+    $shelvedother = 0
 		
 	if ($getFileStatus -eq $false) {
 		hg parent | foreach {
@@ -87,7 +89,6 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
 		}
 	}
     
-    
 	if ($getBookmarkStatus)
 	{
 		$active = ""
@@ -98,6 +99,23 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
 			}
 		}
 	}
+
+    if ($getShelveStatus)
+    {
+        # this only works if shelve names are the same as the branch (i.e. the default behavior if left unspecified)
+        hg shelve -l | %{
+            if ($_ -match '(\S+)\s*\(') {
+                $sbranch = $matches[1]
+                $tbranch = $branch -replace '/', '_' # mimic hg shelve behavior
+                if ($sbranch -eq $tbranch) {
+                    ++$shelvedthis
+                } else {
+                    ++$shelvedother
+                }
+            }
+        }
+    }
+
     return @{"Untracked" = $untracked;
                "Added" = $added;
                "Modified" = $modified;
@@ -109,7 +127,10 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true) {
                "Behind" = $behind;
                "MultipleHeads" = $multipleHeads;
                "ActiveBookmark" = $active;
-               "Branch" = $branch}
+               "Branch" = $branch;
+               "ShelvedThis" = $shelvedthis;
+               "ShelvedOther" = $shelvedother;
+            }
    }
 }
 
