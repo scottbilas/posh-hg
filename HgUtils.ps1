@@ -104,7 +104,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
     {
         # this only works if shelve names are the same as the branch (i.e. the default behavior if left unspecified)
         hg shelve -l | %{
-            if ($_ -match '(\S+)\s*\(') {
+            if ($_ -match '(\S+?)(-\d\d)?\s*\(') { # strip off the -03 etc that hg shelve appends to avoid dups
                 $sbranch = $matches[1]
                 $tbranch = $branch -replace '/', '_' # mimic hg shelve behavior
                 if ($sbranch -eq $tbranch) {

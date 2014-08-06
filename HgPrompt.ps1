@@ -29,14 +29,14 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
         Write-Prompt $status.Branch -BackgroundColor $branchBg -ForegroundColor $branchFg
 
-        if ($s.ShowShelved -and ($status.ShelvedThis -or $status.ShelvedOther)) {
-          Write-Prompt ('(s:{0}/{1})' -f $status.ShelvedThis, $status.ShelvedOther) -BackgroundColor $s.ShelvedBackgroundColor -ForegroundColor $s.ShelvedForegroundColor
-        }
-        
         if($status.Behind) {
           Write-Prompt ('#' + $status.Commit.Split(':')[0]) -BackgroundColor $branchBg -ForegroundColor $branchFg
         }
 
+        if ($s.ShowShelved -and ($status.ShelvedThis -or $status.ShelvedOther)) {
+          Write-Prompt ('(s:{0}/{1})' -f $status.ShelvedThis, $status.ShelvedOther) -BackgroundColor $s.ShelvedBackgroundColor -ForegroundColor $s.ShelvedForegroundColor
+        }
+        
         if($status.Added) {
           Write-Prompt "$($s.AddedStatusPrefix)$($status.Added)" -BackgroundColor $s.AddedBackgroundColor -ForegroundColor $s.AddedForegroundColor
         }
