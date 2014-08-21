@@ -26,41 +26,47 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
           $branchBg = $s.Branch3BackgroundColor
         }
        
+        $written = $false
+
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
-        Write-Prompt $status.Branch -BackgroundColor $branchBg -ForegroundColor $branchFg
+        if ($status.Branch -ne 'default') {
+            Write-Prompt $status.Branch -BackgroundColor $branchBg -ForegroundColor $branchFg
+            $written = $true
+        }
 
         if($status.Behind) {
           Write-Prompt ('#' + $status.Commit.Split(':')[0]) -BackgroundColor $branchBg -ForegroundColor $branchFg
+          $written = $true
         }
 
         if ($s.ShowShelved -and ($status.ShelvedThis -or $status.ShelvedOther)) {
           Write-Prompt ('(s:{0}/{1})' -f $status.ShelvedThis, $status.ShelvedOther) -BackgroundColor $s.ShelvedBackgroundColor -ForegroundColor $s.ShelvedForegroundColor
+          $written = $true
         }
         
-        if($status.Added) {
-          Write-Prompt "$($s.AddedStatusPrefix)$($status.Added)" -BackgroundColor $s.AddedBackgroundColor -ForegroundColor $s.AddedForegroundColor
-        }
-        if($status.Modified) {
-          Write-Prompt "$($s.ModifiedStatusPrefix)$($status.Modified)" -BackgroundColor $s.ModifiedBackgroundColor -ForegroundColor $s.ModifiedForegroundColor
-        }
-        if($status.Deleted) {
-          Write-Prompt "$($s.DeletedStatusPrefix)$($status.Deleted)" -BackgroundColor $s.DeletedBackgroundColor -ForegroundColor $s.DeletedForegroundColor
-        }
-        
-        if ($status.Untracked) {
-          Write-Prompt "$($s.UntrackedStatusPrefix)$($status.Untracked)" -BackgroundColor $s.UntrackedBackgroundColor -ForegroundColor $s.UntrackedForegroundColor
-        }
-        
-        if($status.Missing) {
-           Write-Prompt "$($s.MissingStatusPrefix)$($status.Missing)" -BackgroundColor $s.MissingBackgroundColor -ForegroundColor $s.MissingForegroundColor
+        function write-element($ename, $w) {
+            if ($status.$ename) {
+                $text = $s."$($ename)StatusPrefix" + $status.$ename
+                if (!$w) {
+                    $text = $text.trim()
+                }
+                Write-Prompt $text -BackgroundColor $s."$($ename)BackgroundColor" -ForegroundColor $s."$($ename)ForegroundColor"
+                $w = $true
+            }
+            $w
         }
 
-        if($status.Renamed) {
-           Write-Prompt "$($s.RenamedStatusPrefix)$($status.Renamed)" -BackgroundColor $s.RenamedBackgroundColor -ForegroundColor $s.RenamedForegroundColor
-        }
+        $written = write-element Added $written
+        $written = write-element Modified $written
+        $written = write-element Deleted $written
+        $written = write-element Untracked $written
+        $written = write-element Missing $written
+        $written = write-element Renamed $written
 
         if($s.ShowTags -and ($status.Tags.Length -or $status.ActiveBookmark.Length)) {
-          write-host $s.BeforeTagText -NoNewLine
+          if ($written) {
+              write-host $s.BeforeTagText -NoNewLine
+          }
             
           if($status.ActiveBookmark.Length) {
               Write-Prompt $status.ActiveBookmark -ForegroundColor $s.BranchForegroundColor -BackgroundColor $s.TagBackgroundColor 
