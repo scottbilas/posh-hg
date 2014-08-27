@@ -4,16 +4,20 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     GetBookmarkStatus         = $true
     GetShelveStatus           = $true
 	
-    #Before prompt
+    # Before prompt
     BeforeText                = ' ['
     BeforeForegroundColor     = [ConsoleColor]::Yellow
     BeforeBackgroundColor     = $Host.UI.RawUI.BackgroundColor
     
-    #After prompt
+    # After prompt
     AfterText                 = ']'
     AfterForegroundColor      = [ConsoleColor]::Yellow
     AfterBackgroundColor      = $Host.UI.RawUI.BackgroundColor
-    
+
+    # Errors
+    ErrorForegroundColor     = [ConsoleColor]::White
+    ErrorBackgroundColor     = [ConsoleColor]::DarkRed
+
     # Current branch
     BranchForegroundColor    = [ConsoleColor]::Cyan
     BranchBackgroundColor    = $Host.UI.RawUI.BackgroundColor

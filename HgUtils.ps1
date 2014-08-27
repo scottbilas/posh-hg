@@ -37,6 +37,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
     $multipleHeads = $false
     $shelvedthis = 0
     $shelvedother = 0
+    $error = ""
 		
 	if ($getFileStatus -eq $false) {
 		hg parent | foreach {
@@ -61,32 +62,42 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
 	}
 	else
 	{
-		   hg summary | foreach {   
-		  switch -regex ($_) {
-        'parent: (\S*) ?(.*?)(?: \(([^)]+)\))?$' {
-          $commit = $matches[1];
-          $tags = $matches[2].Split(" ", [StringSplitOptions]::RemoveEmptyEntries)
-          if ($matches[3]) {
-            $tags += $matches[3]
-          }
-        } 
-			'branch: ([\S ]*)' { $branch = $matches[1] }
-			'update: (\d+)' { $behind = $true }
-			'pmerge: (\d+) pending' { $behind = $true }
-			'commit: (.*)' {
-			  $matches[1].Split(",") | foreach {
-				switch -regex ($_.Trim()) {
-				  '(\d+) modified' { $modified = $matches[1] }
-				  '(\d+) added' { $added = $matches[1] }
-				  '(\d+) removed' { $deleted = $matches[1] }
-				  '(\d+) deleted' { $missing = $matches[1] }
-				  '(\d+) unknown' { $untracked = $matches[1] }
-				  '(\d+) renamed' { $renamed = $matches[1] }
-				}
-			  } 
-			} 
-		  } 
-		}
+        $summary = hg summary 2>&1
+        $out = $summary | ?{ !($_ -is [Management.Automation.ErrorRecord]) }
+        $err = $summary | ?{ $_ -is [Management.Automation.ErrorRecord] }
+
+        if ($err) {
+            $error = [string]$err
+        }
+        else {
+            foreach ($line in $out) {
+                switch -regex ($line) {
+                    'parent: (\S*) ?(.*?)(?: \(([^)]+)\))?$' {
+                        $commit = $matches[1];
+                        $tags = $matches[2].Split(" ", [StringSplitOptions]::RemoveEmptyEntries)
+                        if ($matches[3]) {
+                            $tags += $matches[3]
+                        }
+                    }
+                    'branch: ([\S ]*)' { $branch = $matches[1] }
+                    'update: (\d+)' { $behind = $true }
+                    'pmerge: (\d+) pending' { $behind = $true }
+                    'commit: (.*)' {
+                        $matches[1].Split(",") | foreach {
+                            switch -regex ($_.Trim()) {
+                                '(\d+) modified' { $modified = $matches[1] }
+                                '(\d+) added' { $added = $matches[1] }
+                                '(\d+) removed' { $deleted = $matches[1] }
+                                '(\d+) deleted' { $missing = $matches[1] }
+                                '(\d+) unknown' { $untracked = $matches[1] }
+                                '(\d+) renamed' { $renamed = $matches[1] }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 	}
     
 	if ($getBookmarkStatus)
@@ -130,6 +141,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
                "Branch" = $branch;
                "ShelvedThis" = $shelvedthis;
                "ShelvedOther" = $shelvedother;
+               "Error" = $error;
             }
    }
 }

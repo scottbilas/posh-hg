@@ -29,6 +29,10 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
         $written = $false
 
         Write-Prompt $s.BeforeText -BackgroundColor $s.BeforeBackgroundColor -ForegroundColor $s.BeforeForegroundColor
+        if ($status.Error) {
+            Write-Prompt $status.Error -BackgroundColor $s.ErrorBackgroundColor -ForegroundColor $s.ErrorForegroundColor
+        }
+
         if ($status.Branch -ne 'default') {
             Write-Prompt $status.Branch -BackgroundColor $branchBg -ForegroundColor $branchFg
             $written = $true
