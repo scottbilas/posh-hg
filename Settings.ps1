@@ -3,7 +3,8 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     GetFileStatus             = $true
     GetBookmarkStatus         = $true
     GetShelveStatus           = $true
-	
+    GetOutgoingStatus         = $true   
+
     # Before prompt
     BeforeText                = ' ['
     BeforeForegroundColor     = [ConsoleColor]::Yellow
@@ -72,4 +73,9 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     UntrackedStatusPrefix         = ' ?'
     MissingStatusPrefix           = ' !'
     RenamedStatusPrefix           = ' ^'
+
+    # Outgoing
+    OutgoingText                  = '^!^'
+    OutgoingForegroundColor       = [ConsoleColor]::Green
+    OutgoingBackgroundColor       = $Host.UI.RawUI.BackgroundColor
 }

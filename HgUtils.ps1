@@ -21,7 +21,7 @@ function isHgDirectory() {
     return $false
 }
 
-function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelveStatus=$true) {
+function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelveStatus=$true, $getOutgoingStatus=$true) {
     if (!(isHgDirectory)) { return }
 
     $untracked = 0
@@ -36,6 +36,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
     $multipleHeads = $false
     $shelvedthis = 0
     $shelvedother = 0
+    $outgoing = $false
     $error = ""
 
     if ($getFileStatus -eq $false) {
@@ -58,8 +59,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
             }
         }
     }
-    else
-    {
+    else {
         $summary = hg summary 2>&1
         $out = $summary | ?{ !($_ -is [Management.Automation.ErrorRecord]) }
         $err = $summary | ?{ $_ -is [Management.Automation.ErrorRecord] }
@@ -122,22 +122,31 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
         }
     }
 
+    if ($getOutgoingStatus) {
+        # check top change for this branch, and if it's not public, we must have outgoing changes
+        $rev = [int](hg log -l 1 -b . --template '{rev}')
+        $phase = ?: ((hg phase -r $rev) -match ':\s*(.*)$') $matches[1]
+
+        $outgoing = $phase -eq 'draft'
+    }
+
     return @{
-        "Untracked" = $untracked;
-        "Added" = $added;
-        "Modified" = $modified;
-        "Deleted" = $deleted;
-        "Missing" = $missing;
-        "Renamed" = $renamed;
-        "Tags" = $tags;
-        "Commit" = $commit;
-        "Behind" = $behind;
-        "MultipleHeads" = $multipleHeads;
-        "ActiveBookmark" = $active;
-        "Branch" = $branch;
-        "ShelvedThis" = $shelvedthis;
-        "ShelvedOther" = $shelvedother;
-        "Error" = $error;
+        "Untracked" = $untracked
+        "Added" = $added
+        "Modified" = $modified
+        "Deleted" = $deleted
+        "Missing" = $missing
+        "Renamed" = $renamed
+        "Tags" = $tags
+        "Commit" = $commit
+        "Behind" = $behind
+        "MultipleHeads" = $multipleHeads
+        "ActiveBookmark" = $active
+        "Branch" = $branch
+        "ShelvedThis" = $shelvedthis
+        "ShelvedOther" = $shelvedother
+        "Outgoing" = $outgoing
+        "Error" = $error
     }
 }
 

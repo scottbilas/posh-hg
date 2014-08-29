@@ -9,7 +9,7 @@ function Write-Prompt($Object, $ForegroundColor, $BackgroundColor = -1) {
     }
 }
 
-function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileStatus $global:PoshHgSettings.GetBookmarkStatus)) {
+function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileStatus $global:PoshHgSettings.GetBookmarkStatus $global:PoshHgSettings.GetOutgoingStatus)) {
     if (!$status) { return }
 
     $s = $global:PoshHgSettings
@@ -17,7 +17,7 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
     $branchFg = $s.BranchForegroundColor
     $branchBg = $s.BranchBackgroundColor
     
-    if($status.Behind) {
+    if ($status.Behind) {
         $branchFg = $s.Branch2ForegroundColor
         $branchBg = $s.Branch2BackgroundColor
     }
@@ -39,7 +39,7 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
         $written = $true
     }
 
-    if($status.Behind) {
+    if ($status.Behind) {
         Write-Prompt ('#' + $status.Commit.Split(':')[0]) -BackgroundColor $branchBg -ForegroundColor $branchFg
         $written = $true
     }
@@ -68,14 +68,14 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
     $written = write-element Missing $written
     $written = write-element Renamed $written
 
-    if($s.ShowTags -and ($status.Tags.Length -or $status.ActiveBookmark.Length)) {
+    if ($s.ShowTags -and ($status.Tags.Length -or $status.ActiveBookmark.Length)) {
         if ($written) {
             write-host $s.BeforeTagText -NoNewLine
         }
         
-        if($status.ActiveBookmark.Length) {
+        if ($status.ActiveBookmark.Length) {
             Write-Prompt $status.ActiveBookmark -ForegroundColor $s.BranchForegroundColor -BackgroundColor $s.TagBackgroundColor 
-            if($status.Tags.Length) {
+            if ($status.Tags.Length) {
                 Write-Prompt " " -ForegroundColor $s.TagSeparatorColor -BackgroundColor $s.TagBackgroundColor
             }
         }
@@ -86,23 +86,23 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
 
         Write-Prompt $_ -ForegroundColor $color -BackgroundColor $s.TagBackgroundColor 
 
-        if($tagCounter -lt ($status.Tags.Length -1)) {
+        if ($tagCounter -lt ($status.Tags.Length -1)) {
             Write-Prompt ", " -ForegroundColor $s.TagSeparatorColor -BackgroundColor $s.TagBackgroundColor
         }
             $tagCounter++;
         }        
     }
 
-    if($s.ShowPatches) {
+    if ($s.ShowPatches) {
         $patches = Get-MqPatches
-        if($patches.All.Length) {
+        if ($patches.All.Length) {
             write-host $s.BeforePatchText -NoNewLine
 
             $patchCounter = 0
 
             $patches.Applied | % {
                 Write-Prompt $_ -ForegroundColor $s.AppliedPatchForegroundColor -BackgroundColor $s.AppliedPatchBackgroundColor
-                if($patchCounter -lt ($patches.All.Length -1)) {
+                if ($patchCounter -lt ($patches.All.Length -1)) {
                     Write-Prompt $s.PatchSeparator -ForegroundColor $s.PatchSeparatorColor
                 }
                 $patchCounter++;
@@ -110,19 +110,24 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
 
             $patches.Unapplied | % {
                 Write-Prompt $_ -ForegroundColor $s.UnappliedPatchForegroundColor -BackgroundColor $s.UnappliedPatchBackgroundColor
-                if($patchCounter -lt ($patches.All.Length -1)) {
+                if ($patchCounter -lt ($patches.All.Length -1)) {
                     Write-Prompt $s.PatchSeparator -ForegroundColor $s.PatchSeparatorColor
                 }
                 $patchCounter++;
             }
         }
     }
+
+    if ($status.outgoing) {
+        write-host ' ' -NoNewLine
+        Write-Prompt $s.OutgoingText -ForegroundColor $s.OutgoingForegroundColor -BackgroundColor $s.OutgoingBackgroundColor
+    }
     
     Write-Prompt $s.AfterText -BackgroundColor $s.AfterBackgroundColor -ForegroundColor $s.AfterForegroundColor
 }
 
 # Should match https://github.com/dahlbyk/posh-git/blob/master/GitPrompt.ps1
-if((Get-Variable -Scope Global -Name VcsPromptStatuses -ErrorAction SilentlyContinue) -eq $null) {
+if ((Get-Variable -Scope Global -Name VcsPromptStatuses -ErrorAction SilentlyContinue) -eq $null) {
     $Global:VcsPromptStatuses = @()
 }
 
