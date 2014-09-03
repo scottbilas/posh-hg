@@ -21,7 +21,7 @@ function isHgDirectory() {
     return $false
 }
 
-function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelveStatus=$true, $getOutgoingStatus=$true) {
+function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoingStatus=$true) {
     if (!(isHgDirectory)) { return }
 
     $untracked = 0
@@ -33,6 +33,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
     $tags = @()
     $commit = ""
     $behind = $false
+    $bookmarks = ""
     $multipleHeads = $false
     $shelvedthis = 0
     $shelvedother = 0
@@ -41,9 +42,9 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
 
     if ($getFileStatus -eq $false) {
         hg parent | foreach {
-        switch -regex ($_) {
-            'tag:\s*(.*)' { $tags = $matches[1].Replace("(empty repository)", "").Split(" ", [StringSplitOptions]::RemoveEmptyEntries) }
-            'changeset:\s*(\S*)' { $commit = $matches[1]}
+            switch -regex ($_) {
+                'tag:\s*(.*)' { $tags = $matches[1].Replace("(empty repository)", "").Split(" ", [StringSplitOptions]::RemoveEmptyEntries) }
+                'changeset:\s*(\S*)' { $commit = $matches[1]}
             }
         }
         $branch = hg branch
@@ -80,6 +81,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
                     'branch: ([\S ]*)' { $branch = $matches[1] }
                     'update: (\d+)' { $behind = $true }
                     'pmerge: (\d+) pending' { $behind = $true }
+                    'bookmarks: (.*)' { $bookmarks = $matches[1] }
                     'commit: (.*)' {
                         $matches[1].Split(",") | foreach {
                             switch -regex ($_.Trim()) {
@@ -94,17 +96,16 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
                     }
                 }
             }
-        }
-    }
-    
-    if ($getBookmarkStatus) {
-        $active = ""
         hg bookmarks | ?{$_}  | foreach {
             if ($_.Trim().StartsWith("*")) {
                  $split = $_.Split(" ");
                  $active= $split[2]
             }
         }
+        }
+    }
+    
+    if ($getBookmarkStatus) {
     }
 
     if ($getShelveStatus) {
@@ -141,7 +142,7 @@ function Get-HgStatus($getFileStatus=$true, $getBookmarkStatus=$true, $getShelve
         "Commit" = $commit
         "Behind" = $behind
         "MultipleHeads" = $multipleHeads
-        "ActiveBookmark" = $active
+        "Bookmarks" = $bookmarks
         "Branch" = $branch
         "ShelvedThis" = $shelvedthis
         "ShelvedOther" = $shelvedother

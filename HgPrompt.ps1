@@ -9,7 +9,7 @@ function Write-Prompt($Object, $ForegroundColor, $BackgroundColor = -1) {
     }
 }
 
-function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileStatus $global:PoshHgSettings.GetBookmarkStatus $global:PoshHgSettings.GetOutgoingStatus)) {
+function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileStatus $global:PoshHgSettings.GetShelveStatus $global:PoshHgSettings.GetOutgoingStatus)) {
     if (!$status) { return }
 
     $s = $global:PoshHgSettings
@@ -68,13 +68,13 @@ function Write-HgStatus($status = (get-hgStatus $global:PoshHgSettings.GetFileSt
     $written = write-element Missing $written
     $written = write-element Renamed $written
 
-    if ($s.ShowTags -and ($status.Tags.Length -or $status.ActiveBookmark.Length)) {
+    if ($s.ShowTags -and ($status.Tags.Length -or $status.Bookmarks.Length)) {
         if ($written) {
             write-host $s.BeforeTagText -NoNewLine
         }
         
-        if ($status.ActiveBookmark.Length) {
-            Write-Prompt $status.ActiveBookmark -ForegroundColor $s.BranchForegroundColor -BackgroundColor $s.TagBackgroundColor 
+        if ($status.Bookmarks.Length) {
+            Write-Prompt $status.Bookmarks -ForegroundColor $s.BranchForegroundColor -BackgroundColor $s.TagBackgroundColor 
             if ($status.Tags.Length) {
                 Write-Prompt " " -ForegroundColor $s.TagSeparatorColor -BackgroundColor $s.TagBackgroundColor
             }

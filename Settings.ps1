@@ -1,7 +1,6 @@
 $global:PoshHgSettings = New-Object PSObject -Property @{
     #Retrieval settings
     GetFileStatus             = $true
-    GetBookmarkStatus         = $true
     GetShelveStatus           = $true
     GetOutgoingStatus         = $true   
 
@@ -23,7 +22,7 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     BranchForegroundColor    = [ConsoleColor]::Cyan
     BranchBackgroundColor    = $Host.UI.RawUI.BackgroundColor
     # Current branch when not updated
-    Branch2ForegroundColor   = [ConsoleColor]::Red
+    Branch2ForegroundColor   = [ConsoleColor]::DarkYellow
     Branch2BackgroundColor   = $host.UI.RawUI.BackgroundColor
     # Current branch when there are multiple heads
     Branch3ForegroundColor	 = [ConsoleColor]::Magenta
@@ -46,7 +45,7 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     # Tag list
     ShowTags                  = $true
     BeforeTagText             = ' '
-    TagForegroundColor        = [ConsoleColor]::DarkGray
+    TagForegroundColor        = [ConsoleColor]::White
     TagBackgroundColor        = $Host.UI.RawUI.BackgroundColor
     TagSeparator              = ", "
     TagSeparatorColor         = [ConsoleColor]::White
