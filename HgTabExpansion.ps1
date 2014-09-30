@@ -51,8 +51,8 @@ function HgTabExpansion($lastBlock) {
       hgOptions $matches[1] $matches[3];
     }
     
-    #handles hg revert <path>
-    'hg revert (\S*)$' {
+    #handles hg revert <path> or hg shelve <path>
+    'hg (?:revert|shelve) (\S*)$' {
       hgFiles $matches[1] 'M|A|R|!'
     }
     
