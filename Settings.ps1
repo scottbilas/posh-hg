@@ -2,7 +2,7 @@ $global:PoshHgSettings = New-Object PSObject -Property @{
     #Retrieval settings
     GetFileStatus             = $true
     GetShelveStatus           = $true
-    GetOutgoingStatus         = $true   
+    GetOutgoingStatus         = $false  ### TOO SLOW for now
 
     # Before prompt
     BeforeText                = ' ['

@@ -1,28 +1,32 @@
-function isHgDirectory() {
-    if (test-path ".git") {
-            return $false; #short circuit if git repo
-    }
-    
-    if (test-path ".hg") {
-        return $true;
-    }
-    
-    # Test within parent dirs
-    $checkIn = (Get-Item .).parent
-    while ($checkIn -ne $NULL) {
-        $pathToTest = $checkIn.fullname + '/.hg'
-        if ((Test-Path $pathToTest) -eq $TRUE) {
-                return $true
-        } else {
-                $checkIn = $checkIn.parent
+function Get-HgCloneRoot {
+    $dir = get-item (pwd)
+    while ($dir) {
+        # short circuit if git repo
+        if (test-path (join-path $dir.fullname .git)) {
+            break
         }
-    }
+        
+        if (test-path (join-path $dir.fullname .hg)) {
+            return $dir.fullname
+        }
 
-    return $false
+        $dir = $dir.parent
+    }
 }
 
 function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoingStatus=$true) {
-    if (!(isHgDirectory)) { return }
+
+    $clone = Get-HgCloneRoot
+    if (!$clone) { return }
+
+    $ProfileVars.Timing | add-member Hg @()
+
+    function run-hg {
+        $start = get-date
+        $rc = hg $args
+        $ProfileVars.Timing.Hg += [pscustomobject]@{ time = (get-date) - $start; command = "hg $args" }
+        $rc
+    }
 
     $untracked = 0
     $added = 0
@@ -41,16 +45,16 @@ function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoing
     $error = ""
 
     if ($getFileStatus -eq $false) {
-        hg parent | foreach {
+        run-hg parent | foreach {
             switch -regex ($_) {
                 'tag:\s*(.*)' { $tags = $matches[1].Replace("(empty repository)", "").Split(" ", [StringSplitOptions]::RemoveEmptyEntries) }
                 'changeset:\s*(\S*)' { $commit = $matches[1]}
             }
         }
-        $branch = hg branch
+        $branch = run-hg branch
         $behind = $true
         $headCount = 0
-        hg heads $branch | foreach {
+        run-hg heads $branch | foreach {
             switch -regex ($_) {
                 'changeset:\s*(\S*)' { 
                     if ($commit -eq $matches[1]) { $behind=$false }
@@ -61,7 +65,7 @@ function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoing
         }
     }
     else {
-        $summary = hg summary 2>&1
+        $summary = run-hg summary 2>&1
         $out = $summary | ?{ !($_ -is [Management.Automation.ErrorRecord]) }
         $err = $summary | ?{ $_ -is [Management.Automation.ErrorRecord] }
 
@@ -96,7 +100,7 @@ function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoing
                     }
                 }
             }
-        hg bookmarks | ?{$_}  | foreach {
+        run-hg bookmarks | ?{$_}  | foreach {
             if ($_.Trim().StartsWith("*")) {
                  $split = $_.Split(" ");
                  $active= $split[2]
@@ -105,12 +109,9 @@ function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoing
         }
     }
     
-    if ($getBookmarkStatus) {
-    }
-
-    if ($getShelveStatus) {
+    if ($getShelveStatus -and (dir -ea silent $clone\.hg\shelved | select -first 1)) {
         # this only works if shelve names are the same as the branch (i.e. the default behavior if left unspecified)
-        hg shelve -l | %{
+        run-hg shelve -l | %{
             if ($_ -match '(\S+?)(-\d\d)?\s*\(') { # strip off the -03 etc that hg shelve appends to avoid dups
                 $sbranch = $matches[1]
                 $tbranch = $branch -replace '/', '_' # mimic hg shelve behavior
@@ -124,9 +125,9 @@ function Get-HgStatus($getFileStatus=$true, $getShelveStatus=$true, $getOutgoing
     }
 
     if ($getOutgoingStatus) {
-        # check top change for this branch, and if it's not public, we must have outgoing changes
-        $rev = [int](hg log -l 1 -b . --template '{rev}')
-        $phase = ?: ((hg phase -r $rev) -match ':\s*(.*)$') $matches[1]
+        # check top change for this branch, and if it's not public, we must have outgoing changes ($TODO come up with something more accurate that isn't slow..)
+        $rev = [int](run-hg log -l 1 -b . --template '{rev}')
+        $phase = ?: ((run-hg phase -r $rev) -match ':\s*(.*)$') $matches[1]
 
         $outgoing = $phase -eq 'draft'
     }
